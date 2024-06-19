@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  id                 Int       @id @default(autoincrement())
+  userId             Int
+  providerType       String    @db.VarChar(255)
+  providerId         String    @db.VarChar(255)
+  providerAccountId  String    @db.VarChar(255)
+  refreshToken       String?   @db.VarChar(255)
+  accessToken        String?   @db.VarChar(255)
+  accessTokenExpires DateTime? @db.DateTime(0)
+  createdAt          DateTime  @default(now()) @db.DateTime(0)
+  updatedAt          DateTime  @default(now()) @db.DateTime(0)
+  user               user      @relation(fields: [userId], references: [id], onUpdate: Restrict, map: "account_ibfk_1")
+
+  @@unique([providerId, providerAccountId], map: "provider_providerAccountId")
+  @@index([userId], map: "userId")
+}
+
+model schoolaccess {
+  id        Int  @id @default(autoincrement())
+  user_id   Int
+  school_id Int?
+  user      user @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "schoolaccess_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model session {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  expires      DateTime @db.DateTime(0)
+  sessionToken String   @unique(map: "sessionToken") @db.VarChar(255)
+  accessToken  String   @unique(map: "accessToken") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @db.DateTime(0)
+  updatedAt    DateTime @default(now()) @db.DateTime(0)
+  user         user     @relation(fields: [userId], references: [id], onUpdate: Restrict, map: "session_ibfk_1")
+
+  @@index([userId], map: "userId")
+}
+
+model user {
+  id            Int            @id @default(autoincrement())
+  name          String?        @db.VarChar(255)
+  email         String?        @unique(map: "email") @db.VarChar(255)
+  password      String?        @db.VarChar(255)
+  emailVerified DateTime?      @db.DateTime(0)
+  image         String?        @db.VarChar(255)
+  role          String         @db.Text
+  createdAt     DateTime       @default(now()) @db.DateTime(0)
+  updatedAt     DateTime       @default(now()) @db.DateTime(0)
+  account       account[]
+  schoolaccess  schoolaccess[]
+  session       session[]
+}
+
+model verificationrequest {
+  id         Int      @id @default(autoincrement())
+  identifier String   @db.VarChar(255)
+  token      String   @unique(map: "token") @db.VarChar(255)
+  expires    DateTime @db.DateTime(0)
+  createdAt  DateTime @default(now()) @db.DateTime(0)
+  updatedAt  DateTime @default(now()) @db.DateTime(0)
+
+  @@unique([identifier, token], map: "identifier")
+}
